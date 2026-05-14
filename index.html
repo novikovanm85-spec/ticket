@@ -109,27 +109,20 @@
                     <div class="ticket-info"><span>МЕСТО:</span> Липецк, ул. Ленина, 31а</div>
                     <div class="ticket-info"><span>УЧАСТНИК:</span> ${firstName} ${lastName}</div>
                     <div class="ticket-info"><span>БИЛЕТ №:</span> ${ticketNumber}</div>
-                    <div id="barcodeContainer" class="barcode-container"></div>
-                    <div style="text-align: center; font-size: 0.7rem;">🎵 Отсканируйте штрих-код на входе</div>
+                    <svg id="barcode"></svg>
+                    <div style="text-align: center; font-size: 0.7rem; margin-top: 10px;">🎵 Отсканируйте штрих-код на входе</div>
                 </div>
                 <button id="downloadBtn">💾 СКАЧАТЬ БИЛЕТ</button>
             `;
             ticketDiv.classList.remove('hidden');
             
-            // Генерируем штрих-код (прямо сейчас, без задержек)
-            const container = document.getElementById('barcodeContainer');
-            if (container) {
-                container.innerHTML = '';
-                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                container.appendChild(svg);
-                JsBarcode(svg, ticketNumber, {
-                    format: 'CODE128',
-                    width: 2,
-                    height: 50,
-                    displayValue: false,
-                    margin: 0
-                });
-            }
+            // Генерируем штрих-код ТАК ЖЕ, КАК В ТЕСТЕ
+            JsBarcode("#barcode", ticketNumber, {
+                format: "CODE128",
+                width: 2,
+                height: 50,
+                displayValue: true
+            });
             
             // Скачивание билета
             document.getElementById('downloadBtn').addEventListener('click', () => {

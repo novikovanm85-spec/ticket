@@ -65,6 +65,7 @@
             margin: 15px 0;
             background: white;
             padding: 10px;
+            min-height: 70px;
         }
         .hidden { display: none; }
     </style>
@@ -97,6 +98,30 @@
             return `${f1}${l1}-${random}`;
         }
         
+        function generateBarcode(elementId, code) {
+            return new Promise((resolve) => {
+                const el = document.getElementById(elementId);
+                if (!el) {
+                    resolve(false);
+                    return;
+                }
+                try {
+                    JsBarcode("#" + elementId, code, {
+                        format: "CODE128",
+                        width: 2,
+                        height: 50,
+                        displayValue: true,
+                        fontSize: 12,
+                        margin: 5
+                    });
+                    resolve(true);
+                } catch(e) {
+                    console.log('Barcode error', e);
+                    resolve(false);
+                }
+            });
+        }
+        
         function showTicket(firstName, lastName, ticketNumber) {
             const ticketDiv = document.getElementById('ticketDiv');
             ticketDiv.innerHTML = `
@@ -109,30 +134,34 @@
                     <div class="ticket-info"><span>МЕСТО:</span> Липецк, ул. Ленина, 31а</div>
                     <div class="ticket-info"><span>УЧАСТНИК:</span> ${firstName} ${lastName}</div>
                     <div class="ticket-info"><span>БИЛЕТ №:</span> ${ticketNumber}</div>
-                    <svg id="barcode"></svg>
-                    <div style="text-align: center; font-size: 0.7rem; margin-top: 10px;">🎵 Отсканируйте штрих-код на входе</div>
+                    <div id="barcodeContainer" class="barcode-container">
+                        <svg id="barcode"></svg>
+                    </div>
+                    <div style="text-align: center; font-size: 0.7rem;">🎵 Отсканируйте штрих-код на входе</div>
                 </div>
                 <button id="downloadBtn">💾 СКАЧАТЬ БИЛЕТ</button>
             `;
             ticketDiv.classList.remove('hidden');
             
-            // Генерируем штрих-код ТАК ЖЕ, КАК В ТЕСТЕ
-            JsBarcode("#barcode", ticketNumber, {
-                format: "CODE128",
-                width: 2,
-                height: 50,
-                displayValue: true
-            });
+            // Ждём появления элемента и генерируем штрих-код
+            setTimeout(async () => {
+                await generateBarcode('barcode', ticketNumber);
+            }, 200);
             
-            // Скачивание билета
-            document.getElementById('downloadBtn').addEventListener('click', () => {
+            // Скачивание билета с задержкой
+            document.getElementById('downloadBtn').addEventListener('click', async () => {
                 const element = document.getElementById('ticketToDownload');
-                html2canvas(element, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+                // Даём время на генерацию штрих-кода перед скриншотом
+                await new Promise(r => setTimeout(r, 300));
+                try {
+                    const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
                     const link = document.createElement('a');
                     link.download = `ticket_${firstName}_${lastName}.png`;
-                    link.href = canvas.toDataURL();
+                    link.href = canvas.toDataURL('image/png');
                     link.click();
-                });
+                } catch(err) {
+                    alert('Ошибка при сохранении билета');
+                }
             });
         }
         

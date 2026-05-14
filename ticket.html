@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Электронный билет | Музыкальный Квиз</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&family=Russo+One&family=Oswald:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #0a0000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', sans-serif;
+            padding: 20px;
+        }
+
+        /* Контейнер билета */
+        .ticket {
+            max-width: 500px;
+            width: 100%;
+            background: linear-gradient(145deg, #0f0f0f 0%, #1a0a0a 100%);
+            border-radius: 32px;
+            padding: 28px 24px 32px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(204,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        /* Рок-элементы на фоне */
+        .ticket::before {
+            content: "♫♫♫";
+            position: absolute;
+            bottom: -20px;
+            right: -20px;
+            font-size: 8rem;
+            opacity: 0.04;
+            font-family: monospace;
+            color: #cc0000;
+            pointer-events: none;
+        }
+
+        .ticket::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 30%, rgba(204,0,0,0.1) 0%, rgba(0,0,0,0) 70%);
+            pointer-events: none;
+        }
+
+        /* Верхняя полоса с названием */
+        .ticket-header {
+            text-align: center;
+            border-bottom: 2px solid #cc0000;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+        }
+
+        .event-name {
+            font-family: 'Russo One', sans-serif;
+            font-size: 1.8rem;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .event-sub {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1rem;
+            color: #e0e0e0;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        /* Блок информации */
+        .info-block {
+            margin-bottom: 24px;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 16px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .info-label {
+            font-family: 'Oswald', sans-serif;
+            font-weight: 600;
+            color: #cc0000;
+            min-width: 85px;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: white;
+            font-size: 1rem;
+            word-break: break-word;
+        }
+
+        /* Команда и тариф — крупнее */
+        .team-row {
+            background: rgba(204,0,0,0.1);
+            border-left: 3px solid #cc0000;
+            padding: 12px 16px;
+            margin: 16px 0;
+            border-radius: 0 16px 16px 0;
+        }
+
+        .team-row .info-label {
+            min-width: 70px;
+        }
+
+        .team-row .info-value {
+            font-family: 'Russo One', sans-serif;
+            font-size: 1.1rem;
+        }
+
+        /* Штрих-код (декоративная линия) */
+        .barcode {
+            background: repeating-linear-gradient(90deg, #ccc, #ccc 2px, #333 2px, #333 6px);
+            height: 32px;
+            width: 100%;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        /* Кнопка скачивания */
+        .download-btn {
+            background: #cc0000;
+            color: white;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3rem;
+            letter-spacing: 2px;
+            padding: 12px 24px;
+            border: none;
+            width: 100%;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 16px;
+            font-weight: bold;
+        }
+
+        .download-btn:hover {
+            background: #ff0000;
+            transform: scale(1.02);
+        }
+
+        /* Подвал */
+        .footer-note {
+            text-align: center;
+            font-size: 0.65rem;
+            color: #aaa;
+            margin-top: 20px;
+            border-top: 1px solid rgba(204,0,0,0.3);
+            padding-top: 16px;
+        }
+
+        /* Режим для печати / сохранения */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+            .download-btn {
+                display: none;
+            }
+            .ticket {
+                box-shadow: none;
+                border: 1px solid #ccc;
+                page-break-inside: avoid;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ticket" id="ticketContainer">
+        <div class="ticket-header">
+            <div class="event-name">ROCK QUIZ</div>
+            <div class="event-sub">Музыкальная битва</div>
+        </div>
+
+        <div class="info-block">
+            <div class="info-row">
+                <div class="info-label">ДАТА</div>
+                <div class="info-value">28 мая 2026 / 18:00</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">МЕСТО</div>
+                <div class="info-value">Липецк, ул. Ленина, 31а<br>Библиотечно-информационный центр им. П.И. Бартенева</div>
+            </div>
+
+            <!-- ИНФОРМАЦИЯ, КОТОРУЮ ВЫ МОЖЕТЕ ЛЕГКО ПОМЕНЯТЬ -->
+            <div class="team-row">
+                <div class="info-row">
+                    <div class="info-label">КОМАНДА</div>
+                    <div class="info-value" id="teamNameDisplay">Громкие сердца</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">ТАРИФ</div>
+                    <div class="info-value" id="tariffDisplay">Участник</div>
+                </div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">БИЛЕТ №</div>
+                <div class="info-value" id="ticketNumber">RQ-2026-0512</div>
+            </div>
+        </div>
+
+        <div class="barcode"></div>
+
+        <button class="download-btn" id="downloadBtn">🎸 СКАЧАТЬ БИЛЕТ</button>
+
+        <div class="footer-note">
+            🎵 Предъявите билет на входе (экран телефона или распечатка)<br>
+            При поддержке Липецкой Школы Рока и магазина "Камертон48"
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script>
+        // ===== НАСТРОЙКИ БИЛЕТА (ВЫ ЛЕГКО МЕНЯЕТЕ ЗДЕСЬ) =====
+        const ticketData = {
+            teamName: "Громкие сердца",     // ← название команды
+            tariff: "Участник",            // ← тариф: Участник, Зритель, Участник + Группа поддержки
+            ticketNumber: "RQ-2026-0512"   // ← можно сделать уникальным
+        };
+
+        // Отображаем данные
+        document.getElementById('teamNameDisplay').innerText = ticketData.teamName;
+        document.getElementById('tariffDisplay').innerText = ticketData.tariff;
+        document.getElementById('ticketNumber').innerText = ticketData.ticketNumber;
+
+        // Функция скачивания билета как изображение
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            const ticket = document.getElementById('ticketContainer');
+            // Временно уберём кнопку для чистоты картинки
+            const btn = document.querySelector('.download-btn');
+            btn.style.display = 'none';
+            
+            html2canvas(ticket, {
+                scale: 2,
+                backgroundColor: null,
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
+                // Возвращаем кнопку на место
+                btn.style.display = 'block';
+                
+                const link = document.createElement('a');
+                link.download = `ticket_${ticketData.teamName.replace(/\s/g, '_')}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(err => {
+                btn.style.display = 'block';
+                alert('Ошибка при сохранении билета. Попробуйте ещё раз.');
+                console.error(err);
+            });
+        });
+    </script>
+</body>
+</html>

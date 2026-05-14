@@ -4,39 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Получить билет | Музыкальный Квиз</title>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: #0a0000;
             font-family: Arial, sans-serif;
             padding: 20px;
-            min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
         }
         .container {
             max-width: 500px;
-            width: 100%;
             background: #1a1a1a;
             border-radius: 20px;
             padding: 30px;
             border: 1px solid #cc0000;
         }
-        h1 { color: #cc0000; text-align: center; margin-bottom: 25px; font-size: 1.8rem; }
-        h2 { color: #cc0000; text-align: center; font-size: 1.3rem; margin-bottom: 10px; }
-        label { color: #cc0000; display: block; margin-bottom: 5px; font-weight: bold; }
+        h1 { color: #cc0000; text-align: center; }
+        label { color: #cc0000; display: block; margin: 15px 0 5px; }
         input {
             width: 100%;
             padding: 12px;
-            margin-bottom: 20px;
             background: #2a2a2a;
             border: 1px solid #444;
             color: white;
             border-radius: 10px;
-            font-size: 1rem;
         }
         button {
             background: #cc0000;
@@ -45,20 +38,9 @@
             padding: 15px;
             width: 100%;
             font-size: 1.2rem;
-            font-weight: bold;
             border-radius: 10px;
             cursor: pointer;
-            margin-top: 10px;
-        }
-        button:hover { background: #ff0000; }
-        button:disabled { background: #555; cursor: not-allowed; }
-        .error {
-            background: rgba(204,0,0,0.2);
-            padding: 10px;
-            border-radius: 10px;
-            margin-top: 15px;
-            text-align: center;
-            color: #ff8888;
+            margin-top: 20px;
         }
         .ticket {
             background: white;
@@ -68,44 +50,32 @@
             border: 2px solid #cc0000;
             color: black;
         }
-        .ticket-header { text-align: center; border-bottom: 2px solid #cc0000; padding-bottom: 10px; margin-bottom: 15px; }
-        .ticket-header h2 { color: #cc0000; font-size: 1.5rem; margin: 0; }
-        .ticket-header p { color: #333; margin: 5px 0 0; }
-        .ticket-info { margin-bottom: 10px; color: #333; }
-        .ticket-info span { color: #cc0000; font-weight: bold; }
-        .big-number {
+        .ticket-header {
             text-align: center;
-            font-family: monospace;
-            font-size: 1rem;
-            margin-top: 10px;
-            padding: 8px;
-            background: #f0f0f0;
-            border-radius: 8px;
+            border-bottom: 2px solid #cc0000;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
         }
+        .ticket-header h2 { color: #cc0000; margin: 0; }
+        .ticket-info { margin-bottom: 10px; }
+        .ticket-info span { color: #cc0000; font-weight: bold; }
         .barcode-container {
             display: flex;
             justify-content: center;
             margin: 15px 0;
             background: white;
             padding: 10px;
-            border-radius: 10px;
-            min-height: 80px;
         }
         .hidden { display: none; }
-        .footer { text-align: center; font-size: 0.7rem; color: #666; margin-top: 20px; }
-        .event-info { text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #333; }
-        .event-info p { margin: 5px 0; color: #ccc; }
     </style>
 </head>
 <body>
-    <div class="container" id="app">
+    <div class="container">
         <h1>🎸 ПОЛУЧИТЬ БИЛЕТ</h1>
         
-        <div class="event-info">
-            <h2>ROCK QUIZ</h2>
-            <p>Музыкальная битва</p>
-            <p>📅 28 мая 2026 / 18:00</p>
-            <p>📍 Липецк, ул. Ленина, 31а</p>
+        <div id="eventInfo">
+            <h2 style="color:#cc0000; text-align:center;">ROCK QUIZ</h2>
+            <p style="text-align:center;">Музыкальная битва<br>28 мая 2026 / 18:00<br>Липецк, ул. Ленина, 31а</p>
         </div>
         
         <div id="formDiv">
@@ -117,57 +87,14 @@
         </div>
         
         <div id="ticketDiv" class="hidden"></div>
-        <div id="errorDiv" class="error hidden"></div>
-        <div class="footer">Билет можно получить только один раз</div>
     </div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwExUGSUCjdZCRFQSgHuFW8HtoRMiS64tWQsYpqxC6NTbdkNuK9u3QSIVGUM89qa_kf/exec';
-        
-        let isProcessing = false;
-        
-        async function hasTicket(firstName, lastName) {
-            const key = firstName.toLowerCase().trim() + '_' + lastName.toLowerCase().trim();
-            const saved = localStorage.getItem('ticket_issued');
-            if (saved === key) return true;
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL + '?action=check&firstName=' + encodeURIComponent(firstName) + '&lastName=' + encodeURIComponent(lastName));
-                const data = await response.json();
-                return data.exists === true;
-            } catch(e) {
-                return false;
-            }
-        }
-        
-        function markIssued(firstName, lastName) {
-            const key = firstName.toLowerCase().trim() + '_' + lastName.toLowerCase().trim();
-            localStorage.setItem('ticket_issued', key);
-        }
-        
         function generateTicketNumber(firstName, lastName) {
             const random = Math.random().toString(36).substring(2, 10).toUpperCase();
             const f1 = firstName.substring(0, 2).toUpperCase();
             const l1 = lastName.substring(0, 2).toUpperCase();
             return `${f1}${l1}-${random}`;
-        }
-        
-        async function sendToGoogleSheet(firstName, lastName, ticketNumber) {
-            try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        firstName: firstName,
-                        lastName: lastName,
-                        ticketNumber: ticketNumber,
-                        date: new Date().toLocaleString('ru-RU')
-                    })
-                });
-                return true;
-            } catch(e) {
-                return false;
-            }
         }
         
         function showTicket(firstName, lastName, ticketNumber) {
@@ -183,100 +110,51 @@
                     <div class="ticket-info"><span>УЧАСТНИК:</span> ${firstName} ${lastName}</div>
                     <div class="ticket-info"><span>БИЛЕТ №:</span> ${ticketNumber}</div>
                     <div id="barcodeContainer" class="barcode-container"></div>
-                    <div class="big-number">${ticketNumber}</div>
-                    <div style="text-align: center; font-size: 0.7rem; margin-top: 10px;">🎵 Отсканируйте штрих-код на входе</div>
+                    <div style="text-align: center; font-size: 0.7rem;">🎵 Отсканируйте штрих-код на входе</div>
                 </div>
                 <button id="downloadBtn">💾 СКАЧАТЬ БИЛЕТ</button>
             `;
             ticketDiv.classList.remove('hidden');
             
-            // Генерация штрих-кода
+            // Генерируем штрих-код (прямо сейчас, без задержек)
             const container = document.getElementById('barcodeContainer');
             if (container) {
                 container.innerHTML = '';
                 const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                svg.setAttribute('id', 'barcode-svg');
                 container.appendChild(svg);
-                try {
-                    JsBarcode('#barcode-svg', ticketNumber, {
-                        format: 'CODE128',
-                        width: 2,
-                        height: 50,
-                        displayValue: false,
-                        margin: 0
-                    });
-                } catch(e) {
-                    container.innerHTML = `<div style="padding:10px;">${ticketNumber}</div>`;
-                }
-            }
-            
-            // Кнопка скачивания
-            const downloadBtn = document.getElementById('downloadBtn');
-            if (downloadBtn) {
-                downloadBtn.addEventListener('click', async () => {
-                    const element = document.getElementById('ticketToDownload');
-                    try {
-                        const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
-                        const link = document.createElement('a');
-                        link.download = `ticket_${firstName}_${lastName}.png`;
-                        link.href = canvas.toDataURL('image/png');
-                        link.click();
-                    } catch(err) {
-                        alert('Ошибка при сохранении билета');
-                    }
+                JsBarcode(svg, ticketNumber, {
+                    format: 'CODE128',
+                    width: 2,
+                    height: 50,
+                    displayValue: false,
+                    margin: 0
                 });
             }
+            
+            // Скачивание билета
+            document.getElementById('downloadBtn').addEventListener('click', () => {
+                const element = document.getElementById('ticketToDownload');
+                html2canvas(element, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `ticket_${firstName}_${lastName}.png`;
+                    link.href = canvas.toDataURL();
+                    link.click();
+                });
+            });
         }
         
-        document.getElementById('generateBtn').addEventListener('click', async () => {
-            if (isProcessing) return;
-            
+        document.getElementById('generateBtn').addEventListener('click', () => {
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
-            const errorDiv = document.getElementById('errorDiv');
-            const formDiv = document.getElementById('formDiv');
-            const generateBtn = document.getElementById('generateBtn');
             
             if (!firstName || !lastName) {
-                errorDiv.innerHTML = '❌ Заполните имя и фамилию';
-                errorDiv.classList.remove('hidden');
-                return;
-            }
-            
-            isProcessing = true;
-            generateBtn.disabled = true;
-            generateBtn.textContent = 'ПРОВЕРКА...';
-            
-            const alreadyIssued = await hasTicket(firstName, lastName);
-            if (alreadyIssued) {
-                errorDiv.innerHTML = '❌ Вы уже получили билет. Билет выдаётся один раз.';
-                errorDiv.classList.remove('hidden');
-                generateBtn.disabled = false;
-                generateBtn.textContent = 'ПОЛУЧИТЬ БИЛЕТ';
-                isProcessing = false;
+                alert('Заполните имя и фамилию');
                 return;
             }
             
             const ticketNumber = generateTicketNumber(firstName, lastName);
-            generateBtn.textContent = 'ОТПРАВКА...';
-            
-            const sent = await sendToGoogleSheet(firstName, lastName, ticketNumber);
-            if (!sent) {
-                errorDiv.innerHTML = '❌ Ошибка отправки. Попробуйте ещё раз.';
-                errorDiv.classList.remove('hidden');
-                generateBtn.disabled = false;
-                generateBtn.textContent = 'ПОЛУЧИТЬ БИЛЕТ';
-                isProcessing = false;
-                return;
-            }
-            
-            markIssued(firstName, lastName);
-            formDiv.classList.add('hidden');
-            errorDiv.classList.add('hidden');
+            document.getElementById('formDiv').classList.add('hidden');
             showTicket(firstName, lastName, ticketNumber);
-            
-            generateBtn.disabled = false;
-            isProcessing = false;
         });
     </script>
 </body>

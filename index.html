@@ -4,154 +4,136 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Получить билет | Музыкальный Квиз</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&family=Russo+One&family=Oswald:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            min-height: 100vh;
             background: #0a0000;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: 'Inter', sans-serif;
-            padding: 20px;
         }
         .container {
             max-width: 500px;
             width: 100%;
-            background: linear-gradient(145deg, #0f0f0f 0%, #1a0a0a 100%);
-            border-radius: 32px;
-            padding: 32px 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(204,0,0,0.3);
+            background: #1a1a1a;
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid #cc0000;
         }
-        h1 {
-            font-family: 'Russo One', sans-serif;
-            font-size: 1.8rem;
-            text-align: center;
-            background: linear-gradient(135deg, #ff0000, #cc0000);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            margin-bottom: 20px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            font-family: 'Oswald', sans-serif;
-            color: #cc0000;
-            display: block;
-            margin-bottom: 8px;
-        }
+        h1 { color: #cc0000; text-align: center; margin-bottom: 25px; font-size: 1.8rem; }
+        h2 { color: #cc0000; text-align: center; font-size: 1.3rem; margin-bottom: 10px; }
+        label { color: #cc0000; display: block; margin-bottom: 5px; font-weight: bold; }
         input {
             width: 100%;
-            padding: 14px;
-            background: #1a1a1a;
-            border: 1px solid #333;
+            padding: 12px;
+            margin-bottom: 20px;
+            background: #2a2a2a;
+            border: 1px solid #444;
             color: white;
-            border-radius: 30px;
+            border-radius: 10px;
             font-size: 1rem;
         }
-        input:focus {
-            outline: none;
-            border-color: #cc0000;
-        }
-        .btn {
+        button {
             background: #cc0000;
             color: white;
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 1.3rem;
-            letter-spacing: 2px;
-            padding: 14px 24px;
             border: none;
+            padding: 15px;
             width: 100%;
-            border-radius: 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 10px;
             cursor: pointer;
-            transition: 0.2s;
             margin-top: 10px;
         }
-        .btn:hover {
-            background: #ff0000;
-            transform: scale(1.02);
-        }
+        button:hover { background: #ff0000; }
         .error {
             background: rgba(204,0,0,0.2);
-            border-left: 4px solid #cc0000;
-            padding: 12px;
-            border-radius: 12px;
+            padding: 10px;
+            border-radius: 10px;
             margin-top: 15px;
             text-align: center;
-            font-size: 0.9rem;
+            color: #ff8888;
         }
         .ticket {
-            margin-top: 20px;
+            background: #0a0a0a;
             padding: 20px;
-            background: rgba(0,0,0,0.5);
-            border-radius: 24px;
-        }
-        .footer-note {
-            text-align: center;
-            font-size: 0.65rem;
-            color: #aaa;
+            border-radius: 15px;
             margin-top: 20px;
+            border: 1px solid #cc0000;
         }
-        .qr-container {
-            display: flex;
-            justify-content: center;
-            margin: 15px 0;
-        }
+        .ticket-header { text-align: center; border-bottom: 2px solid #cc0000; padding-bottom: 10px; margin-bottom: 15px; }
+        .ticket-header h2 { color: #cc0000; font-size: 1.5rem; }
+        .ticket-info { margin-bottom: 10px; }
+        .ticket-info span { color: #cc0000; font-weight: bold; }
+        .qr-container { display: flex; justify-content: center; margin: 15px 0; }
+        .hidden { display: none; }
+        .footer { text-align: center; font-size: 0.7rem; color: #666; margin-top: 20px; }
+        .event-info { text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #333; }
+        .event-info p { margin: 5px 0; color: #ccc; }
     </style>
 </head>
 <body>
     <div class="container" id="app">
         <h1>🎸 ПОЛУЧИТЬ БИЛЕТ</h1>
         
-        <div id="formContainer">
-            <div class="form-group">
-                <label>ИМЯ *</label>
-                <input type="text" id="firstName" placeholder="Иван">
-            </div>
-            <div class="form-group">
-                <label>ФАМИЛИЯ *</label>
-                <input type="text" id="lastName" placeholder="Иванов">
-            </div>
-            <button class="btn" id="generateBtn">🎫 ПОЛУЧИТЬ БИЛЕТ</button>
+        <!-- Информация о мероприятии -->
+        <div class="event-info">
+            <h2>ROCK QUIZ</h2>
+            <p>Музыкальная битва</p>
+            <p>📅 28 мая 2026 / 18:00</p>
+            <p>📍 Липецк, ул. Ленина, 31а</p>
         </div>
         
-        <div id="ticketContainer" style="display: none;"></div>
-        <div id="errorMessage" class="error" style="display: none;"></div>
-        <div class="footer-note">Билет можно получить только один раз</div>
+        <div id="formDiv">
+            <label>ИМЯ</label>
+            <input type="text" id="firstName" placeholder="Иван">
+            
+            <label>ФАМИЛИЯ</label>
+            <input type="text" id="lastName" placeholder="Иванов">
+            
+            <button id="generateBtn">ПОЛУЧИТЬ БИЛЕТ</button>
+        </div>
+        
+        <div id="ticketDiv" class="hidden"></div>
+        <div id="errorDiv" class="error hidden"></div>
+        <div class="footer">Билет можно получить только один раз</div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script>
-        // Google Script URL (ваш)
+        // ========== НАСТРОЙКА GOOGLE ТАБЛИЦЫ ==========
+        // Укажите URL вашего Google Apps Script (замените на свой)
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby_8GqoxJS_OmCGJO-wI4mrJIqVW4SlTS56LDypLtE-Qg13ZOV06LSatLBpkAj_InXTyg/exec';
         
-        function isTicketIssued(firstName, lastName) {
-            const key = `${firstName.toLowerCase().trim()}_${lastName.toLowerCase().trim()}`;
-            const issued = localStorage.getItem('issued_tickets') || '[]';
-            const list = JSON.parse(issued);
-            return list.includes(key);
+        // ========== ФУНКЦИИ ==========
+        
+        // Проверка, не получал ли уже билет
+        function hasTicket(firstName, lastName) {
+            const key = firstName.toLowerCase().trim() + '_' + lastName.toLowerCase().trim();
+            const saved = localStorage.getItem('ticket_issued');
+            return saved === key;
         }
         
-        function markTicketIssued(firstName, lastName) {
-            const key = `${firstName.toLowerCase().trim()}_${lastName.toLowerCase().trim()}`;
-            const issued = localStorage.getItem('issued_tickets') || '[]';
-            const list = JSON.parse(issued);
-            list.push(key);
-            localStorage.setItem('issued_tickets', JSON.stringify(list));
+        // Отметка о выдаче билета
+        function markIssued(firstName, lastName) {
+            const key = firstName.toLowerCase().trim() + '_' + lastName.toLowerCase().trim();
+            localStorage.setItem('ticket_issued', key);
         }
         
-        function generateTicketId(firstName, lastName) {
-            const timestamp = Date.now();
-            const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-            const initials = `${firstName.substring(0, 2)}${lastName.substring(0, 2)}`.toUpperCase();
-            return `${initials}-${timestamp.toString().slice(-6)}-${random}`;
+        // Генерация уникального номера билета
+        function generateTicketNumber(firstName, lastName) {
+            const random = Math.random().toString(36).substring(2, 10).toUpperCase();
+            const f1 = firstName.substring(0, 2).toUpperCase();
+            const l1 = lastName.substring(0, 2).toUpperCase();
+            return `${f1}${l1}-${random}`;
         }
         
-        async function saveToGoogleSheet(firstName, lastName, ticketId) {
+        // Отправка данных в Google Таблицу (в столбцы начиная с G)
+        async function sendToGoogleSheet(firstName, lastName, ticketNumber) {
             try {
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
@@ -160,63 +142,53 @@
                     body: JSON.stringify({
                         firstName: firstName,
                         lastName: lastName,
-                        ticketId: ticketId,
+                        ticketNumber: ticketNumber,
                         date: new Date().toLocaleString('ru-RU')
                     })
                 });
-                console.log('Сохранено в Google');
+                console.log('Данные отправлены в Google Таблицу');
             } catch(e) {
-                console.log('Ошибка сохранения');
+                console.log('Ошибка отправки:', e);
             }
         }
         
-        function renderTicket(firstName, lastName, ticketId) {
-            const container = document.getElementById('ticketContainer');
-            container.innerHTML = `
+        // Отображение билета
+        function showTicket(firstName, lastName, ticketNumber) {
+            const ticketDiv = document.getElementById('ticketDiv');
+            ticketDiv.innerHTML = `
                 <div class="ticket" id="ticketToDownload">
-                    <div style="text-align: center; border-bottom: 2px solid #cc0000; padding-bottom: 12px; margin-bottom: 16px;">
-                        <div style="font-family: 'Russo One', sans-serif; font-size: 1.5rem; background: linear-gradient(135deg, #ff0000, #cc0000); background-clip: text; -webkit-background-clip: text; color: transparent;">ROCK QUIZ</div>
-                        <div style="font-family: 'Bebas Neue', sans-serif; font-size: 0.8rem;">Музыкальная битва</div>
+                    <div class="ticket-header">
+                        <h2>ROCK QUIZ</h2>
+                        <p>Музыкальная битва</p>
                     </div>
-                    <div style="margin-bottom: 16px;">
-                        <div style="display: flex; margin-bottom: 12px;"><div style="color: #cc0000; width: 90px; font-weight: bold;">ДАТА</div><div>28 мая 2026 / 18:00</div></div>
-                        <div style="display: flex; margin-bottom: 12px;"><div style="color: #cc0000; width: 90px; font-weight: bold;">МЕСТО</div><div>Липецк, ул. Ленина, 31а</div></div>
-                        <div style="background: rgba(204,0,0,0.1); border-left: 3px solid #cc0000; padding: 12px; margin: 12px 0;">
-                            <div><span style="color: #cc0000;">УЧАСТНИК</span> <strong>${firstName} ${lastName}</strong></div>
-                        </div>
-                        <div><span style="color: #cc0000;">БИЛЕТ №</span> ${ticketId}</div>
-                    </div>
-                    <div id="qr_${ticketId}" class="qr-container"></div>
-                    <div style="text-align: center; font-size: 0.7rem; color: #aaa; margin-top: 15px;">
-                        🎵 Предъявите билет на входе
-                    </div>
+                    <div class="ticket-info"><span>ДАТА:</span> 28 мая 2026 / 18:00</div>
+                    <div class="ticket-info"><span>МЕСТО:</span> Липецк, ул. Ленина, 31а</div>
+                    <div class="ticket-info"><span>УЧАСТНИК:</span> ${firstName} ${lastName}</div>
+                    <div class="ticket-info"><span>БИЛЕТ №:</span> ${ticketNumber}</div>
+                    <div id="qrcode" class="qr-container"></div>
+                    <div style="text-align: center; font-size: 0.7rem;">🎵 Предъявите билет на входе</div>
                 </div>
-                <button id="downloadTicketBtn" class="btn" style="margin-top: 15px;">💾 СКАЧАТЬ БИЛЕТ</button>
+                <button id="downloadBtn">💾 СКАЧАТЬ БИЛЕТ</button>
             `;
-            container.style.display = 'block';
+            ticketDiv.classList.remove('hidden');
             
             // Генерация QR-кода
             try {
-                new QRCode(document.getElementById(`qr_${ticketId}`), {
-                    text: ticketId,
+                new QRCode(document.getElementById("qrcode"), {
+                    text: ticketNumber,
                     width: 160,
                     height: 160,
                     colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
+                    colorLight: "#ffffff"
                 });
             } catch(e) {
                 console.log('QR error', e);
             }
             
             // Кнопка скачивания
-            document.getElementById('downloadTicketBtn').addEventListener('click', () => {
-                const ticketElement = document.getElementById('ticketToDownload');
-                html2canvas(ticketElement, {
-                    scale: 2,
-                    backgroundColor: null,
-                    logging: false
-                }).then(canvas => {
+            document.getElementById('downloadBtn').addEventListener('click', () => {
+                const element = document.getElementById('ticketToDownload');
+                html2canvas(element, { scale: 2, backgroundColor: null }).then(canvas => {
                     const link = document.createElement('a');
                     link.download = `ticket_${firstName}_${lastName}.png`;
                     link.href = canvas.toDataURL('image/png');
@@ -227,33 +199,37 @@
             });
         }
         
+        // ========== ОСНОВНАЯ ЛОГИКА ==========
         document.getElementById('generateBtn').addEventListener('click', async () => {
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
-            const errorDiv = document.getElementById('errorMessage');
-            const formContainer = document.getElementById('formContainer');
+            const errorDiv = document.getElementById('errorDiv');
+            const formDiv = document.getElementById('formDiv');
             
             if (!firstName || !lastName) {
-                errorDiv.style.display = 'block';
                 errorDiv.innerHTML = '❌ Заполните имя и фамилию';
+                errorDiv.classList.remove('hidden');
                 return;
             }
             
-            if (isTicketIssued(firstName, lastName)) {
-                errorDiv.style.display = 'block';
+            if (hasTicket(firstName, lastName)) {
                 errorDiv.innerHTML = '❌ Вы уже получили билет. Билет выдаётся один раз.';
+                errorDiv.classList.remove('hidden');
                 return;
             }
             
-            const ticketId = generateTicketId(firstName, lastName);
+            const ticketNumber = generateTicketNumber(firstName, lastName);
             
-            await saveToGoogleSheet(firstName, lastName, ticketId);
-            markTicketIssued(firstName, lastName);
+            // Отправляем в Google Таблицу
+            await sendToGoogleSheet(firstName, lastName, ticketNumber);
             
-            formContainer.style.display = 'none';
-            errorDiv.style.display = 'none';
+            // Отмечаем как выданный
+            markIssued(firstName, lastName);
             
-            renderTicket(firstName, lastName, ticketId);
+            // Скрываем форму, показываем билет
+            formDiv.classList.add('hidden');
+            errorDiv.classList.add('hidden');
+            showTicket(firstName, lastName, ticketNumber);
         });
     </script>
 </body>

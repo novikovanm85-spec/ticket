@@ -50,6 +50,10 @@
             margin-top: 10px;
         }
         button:hover { background: #ff0000; }
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
         .error {
             background: rgba(204,0,0,0.2);
             padding: 10px;
@@ -71,16 +75,16 @@
         .ticket-header p { color: #333; margin: 5px 0 0; }
         .ticket-info { margin-bottom: 10px; color: #333; }
         .ticket-info span { color: #cc0000; font-weight: bold; }
-        .ticket-code {
-            background: #f0f0f0;
-            padding: 15px;
-            margin: 15px auto;
+        .big-number {
             text-align: center;
             font-family: monospace;
-            font-size: 1.3rem;
+            font-size: 1.6rem;
             font-weight: bold;
             letter-spacing: 2px;
-            border: 1px dashed #cc0000;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 10px;
             word-break: break-all;
         }
         .hidden { display: none; }
@@ -114,13 +118,27 @@
     </div>
 
     <script>
-        // ========== НАСТРОЙКА GOOGLE ТАБЛИЦЫ ==========
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwExUGSUCjdZCRFQSgHuFW8HtoRMiS64tWQsYpqxC6NTbdkNuK9u3QSIVGUM89qa_kf/exec';
         
-        function hasTicket(firstName, lastName) {
+        // Блокируем кнопку после первого нажатия (пока не завершится операция)
+        let isProcessing = false;
+        
+        // Проверка, не получал ли уже билет (по имени+фамилии)
+        async function hasTicket(firstName, lastName) {
+            // Сначала проверяем локально (быстро)
             const key = firstName.toLowerCase().trim() + '_' + lastName.toLowerCase().trim();
             const saved = localStorage.getItem('ticket_issued');
-            return saved === key;
+            if (saved === key) return true;
+            
+            // Дополнительная проверка через Google Таблицу (защита от очистки localStorage)
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL + '?action=check&firstName=' + encodeURIComponent(firstName) + '&lastName=' + encodeURIComponent(lastName));
+                const data = await response.json();
+                return data.exists === true;
+            } catch(e) {
+                console.log('Ошибка проверки в таблице', e);
+                return false;
+            }
         }
         
         function markIssued(firstName, lastName) {
@@ -148,9 +166,11 @@
                         date: new Date().toLocaleString('ru-RU')
                     })
                 });
-                console.log('Данные отправлены в Google Таблицу');
+                console.log('Данные отправлены');
+                return true;
             } catch(e) {
                 console.log('Ошибка отправки:', e);
+                return false;
             }
         }
         
@@ -166,35 +186,36 @@
                     <div class="ticket-info"><span>МЕСТО:</span> Липецк, ул. Ленина, 31а</div>
                     <div class="ticket-info"><span>УЧАСТНИК:</span> ${firstName} ${lastName}</div>
                     <div class="ticket-info"><span>БИЛЕТ №:</span> ${ticketNumber}</div>
-                    <div class="ticket-code">🎫 ${ticketNumber}</div>
-                    <div style="text-align: center; font-size: 0.7rem; margin-top: 10px;">🎵 Предъявите билет на входе (назовите номер билета)</div>
+                    <div class="big-number">${ticketNumber}</div>
+                    <div style="text-align: center; font-size: 0.7rem; margin-top: 10px;">🎵 Предъявите билет на входе</div>
                 </div>
                 <button id="downloadBtn">💾 СКАЧАТЬ БИЛЕТ</button>
             `;
             ticketDiv.classList.remove('hidden');
             
-            const downloadBtn = document.getElementById('downloadBtn');
-            if (downloadBtn) {
-                downloadBtn.addEventListener('click', async () => {
-                    const element = document.getElementById('ticketToDownload');
-                    try {
-                        const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
-                        const link = document.createElement('a');
-                        link.download = `ticket_${firstName}_${lastName}.png`;
-                        link.href = canvas.toDataURL('image/png');
-                        link.click();
-                    } catch(err) {
-                        alert('Ошибка при сохранении билета');
-                    }
-                });
-            }
+            document.getElementById('downloadBtn').addEventListener('click', async () => {
+                const element = document.getElementById('ticketToDownload');
+                try {
+                    const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
+                    const link = document.createElement('a');
+                    link.download = `ticket_${firstName}_${lastName}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                } catch(err) {
+                    alert('Ошибка при сохранении билета');
+                }
+            });
         }
         
         document.getElementById('generateBtn').addEventListener('click', async () => {
+            // Защита от повторного нажатия
+            if (isProcessing) return;
+            
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
             const errorDiv = document.getElementById('errorDiv');
             const formDiv = document.getElementById('formDiv');
+            const generateBtn = document.getElementById('generateBtn');
             
             if (!firstName || !lastName) {
                 errorDiv.innerHTML = '❌ Заполните имя и фамилию';
@@ -202,20 +223,44 @@
                 return;
             }
             
-            if (hasTicket(firstName, lastName)) {
+            // Блокируем кнопку
+            isProcessing = true;
+            generateBtn.disabled = true;
+            generateBtn.textContent = 'ПРОВЕРКА...';
+            
+            // Проверяем, не получал ли уже билет
+            const alreadyIssued = await hasTicket(firstName, lastName);
+            if (alreadyIssued) {
                 errorDiv.innerHTML = '❌ Вы уже получили билет. Билет выдаётся один раз.';
                 errorDiv.classList.remove('hidden');
+                generateBtn.disabled = false;
+                generateBtn.textContent = 'ПОЛУЧИТЬ БИЛЕТ';
+                isProcessing = false;
                 return;
             }
             
             const ticketNumber = generateTicketNumber(firstName, lastName);
             
-            await sendToGoogleSheet(firstName, lastName, ticketNumber);
+            generateBtn.textContent = 'ОТПРАВКА...';
+            
+            const sent = await sendToGoogleSheet(firstName, lastName, ticketNumber);
+            if (!sent) {
+                errorDiv.innerHTML = '❌ Ошибка отправки. Попробуйте ещё раз.';
+                errorDiv.classList.remove('hidden');
+                generateBtn.disabled = false;
+                generateBtn.textContent = 'ПОЛУЧИТЬ БИЛЕТ';
+                isProcessing = false;
+                return;
+            }
+            
             markIssued(firstName, lastName);
             
             formDiv.classList.add('hidden');
             errorDiv.classList.add('hidden');
             showTicket(firstName, lastName, ticketNumber);
+            
+            generateBtn.disabled = false;
+            isProcessing = false;
         });
     </script>
 </body>

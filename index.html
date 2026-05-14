@@ -170,26 +170,6 @@
             }
         }
         
-        function generateBarcode(containerId, code) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            container.innerHTML = '';
-            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            svg.setAttribute('id', 'barcode-svg');
-            container.appendChild(svg);
-            try {
-                JsBarcode('#barcode-svg', code, {
-                    format: 'CODE128',
-                    width: 2,
-                    height: 50,
-                    displayValue: false,
-                    margin: 0
-                });
-            } catch(e) {
-                container.innerHTML = `<div style="padding:10px;">${code}</div>`;
-            }
-        }
-        
         function showTicket(firstName, lastName, ticketNumber) {
             const ticketDiv = document.getElementById('ticketDiv');
             ticketDiv.innerHTML = `
@@ -210,22 +190,34 @@
             `;
             ticketDiv.classList.remove('hidden');
             
-            // Ждём появления контейнера, затем генерируем штрих-код
-            const waitForContainer = setInterval(() => {
+            // Генерируем штрих-код ПОСЛЕ того, как DOM обновился
+            setTimeout(() => {
                 const container = document.getElementById('barcodeContainer');
                 if (container) {
-                    clearInterval(waitForContainer);
-                    generateBarcode('barcodeContainer', ticketNumber);
+                    container.innerHTML = '';
+                    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    svg.setAttribute('id', 'barcode-svg');
+                    container.appendChild(svg);
+                    try {
+                        JsBarcode('#barcode-svg', ticketNumber, {
+                            format: 'CODE128',
+                            width: 2,
+                            height: 50,
+                            displayValue: false,
+                            margin: 0
+                        });
+                    } catch(e) {
+                        container.innerHTML = `<div style="padding:10px;">${ticketNumber}</div>`;
+                    }
                 }
-            }, 50);
+            }, 100);
             
-            // Кнопка скачивания с принудительной задержкой
+            // Кнопка скачивания
             const downloadBtn = document.getElementById('downloadBtn');
             if (downloadBtn) {
                 downloadBtn.addEventListener('click', async () => {
                     const element = document.getElementById('ticketToDownload');
-                    // Дополнительная задержка перед скриншотом
-                    await new Promise(r => setTimeout(r, 300));
+                    await new Promise(r => setTimeout(r, 200));
                     try {
                         const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
                         const link = document.createElement('a');

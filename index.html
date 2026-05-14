@@ -51,10 +51,7 @@
             margin-top: 10px;
         }
         button:hover { background: #ff0000; }
-        button:disabled {
-            background: #555;
-            cursor: not-allowed;
-        }
+        button:disabled { background: #555; cursor: not-allowed; }
         .error {
             background: rgba(204,0,0,0.2);
             padding: 10px;
@@ -79,14 +76,11 @@
         .big-number {
             text-align: center;
             font-family: monospace;
-            font-size: 1.2rem;
-            font-weight: bold;
-            letter-spacing: 2px;
-            margin: 10px 0;
-            padding: 10px;
+            font-size: 1rem;
+            margin-top: 10px;
+            padding: 8px;
             background: #f0f0f0;
-            border-radius: 10px;
-            word-break: break-all;
+            border-radius: 8px;
         }
         .barcode-container {
             display: flex;
@@ -95,6 +89,7 @@
             background: white;
             padding: 10px;
             border-radius: 10px;
+            min-height: 70px;
         }
         .hidden { display: none; }
         .footer { text-align: center; font-size: 0.7rem; color: #666; margin-top: 20px; }
@@ -135,13 +130,11 @@
             const key = firstName.toLowerCase().trim() + '_' + lastName.toLowerCase().trim();
             const saved = localStorage.getItem('ticket_issued');
             if (saved === key) return true;
-            
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL + '?action=check&firstName=' + encodeURIComponent(firstName) + '&lastName=' + encodeURIComponent(lastName));
                 const data = await response.json();
                 return data.exists === true;
             } catch(e) {
-                console.log('Ошибка проверки в таблице', e);
                 return false;
             }
         }
@@ -171,21 +164,19 @@
                         date: new Date().toLocaleString('ru-RU')
                     })
                 });
-                console.log('Данные отправлены');
                 return true;
             } catch(e) {
-                console.log('Ошибка отправки:', e);
                 return false;
             }
         }
         
         function generateBarcode(containerId, code) {
             const container = document.getElementById(containerId);
+            if (!container) return;
             container.innerHTML = '';
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.setAttribute('id', 'barcode-svg');
             container.appendChild(svg);
-            
             try {
                 JsBarcode('#barcode-svg', code, {
                     format: 'CODE128',
@@ -195,8 +186,7 @@
                     margin: 0
                 });
             } catch(e) {
-                console.log('Barcode error', e);
-                container.innerHTML = `<div style="padding:10px; background:#f0f0f0;">${code}</div>`;
+                container.innerHTML = `<div style="padding:10px;">${code}</div>`;
             }
         }
         
@@ -220,23 +210,33 @@
             `;
             ticketDiv.classList.remove('hidden');
             
-            // Генерируем штрих-код
-            setTimeout(() => {
-                generateBarcode('barcodeContainer', ticketNumber);
-            }, 100);
-            
-            document.getElementById('downloadBtn').addEventListener('click', async () => {
-                const element = document.getElementById('ticketToDownload');
-                try {
-                    const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
-                    const link = document.createElement('a');
-                    link.download = `ticket_${firstName}_${lastName}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                } catch(err) {
-                    alert('Ошибка при сохранении билета');
+            // Ждём появления контейнера, затем генерируем штрих-код
+            const waitForContainer = setInterval(() => {
+                const container = document.getElementById('barcodeContainer');
+                if (container) {
+                    clearInterval(waitForContainer);
+                    generateBarcode('barcodeContainer', ticketNumber);
                 }
-            });
+            }, 50);
+            
+            // Кнопка скачивания с принудительной задержкой
+            const downloadBtn = document.getElementById('downloadBtn');
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', async () => {
+                    const element = document.getElementById('ticketToDownload');
+                    // Дополнительная задержка перед скриншотом
+                    await new Promise(r => setTimeout(r, 300));
+                    try {
+                        const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
+                        const link = document.createElement('a');
+                        link.download = `ticket_${firstName}_${lastName}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    } catch(err) {
+                        alert('Ошибка при сохранении билета');
+                    }
+                });
+            }
         }
         
         document.getElementById('generateBtn').addEventListener('click', async () => {
@@ -269,7 +269,6 @@
             }
             
             const ticketNumber = generateTicketNumber(firstName, lastName);
-            
             generateBtn.textContent = 'ОТПРАВКА...';
             
             const sent = await sendToGoogleSheet(firstName, lastName, ticketNumber);
@@ -283,7 +282,6 @@
             }
             
             markIssued(firstName, lastName);
-            
             formDiv.classList.add('hidden');
             errorDiv.classList.add('hidden');
             showTicket(firstName, lastName, ticketNumber);

@@ -76,7 +76,6 @@
             padding: 15px;
             margin: 15px auto;
             text-align: center;
-            border: 1px dashed #cc0000;
             max-width: 200px;
         }
         .qr-code img { max-width: 100%; }
@@ -111,7 +110,6 @@
     </div>
 
     <script>
-        // Простая проверка
         function hasTicket(firstName, lastName) {
             const key = firstName.toLowerCase().trim() + '_' + lastName.toLowerCase().trim();
             const saved = localStorage.getItem('ticket_issued');
@@ -130,12 +128,11 @@
             return `${f1}${l1}-${random}`;
         }
         
-        // Функция для создания простого QR-кода (через API)
-        async function generateQRCode(text, elementId) {
+        // Функция для создания QR-кода с колбэком
+        function generateQRCode(text, elementId, callback) {
             const container = document.getElementById(elementId);
             container.innerHTML = '';
             
-            // Используем бесплатное API для генерации QR-кода
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(text)}`;
             
             const img = document.createElement('img');
@@ -143,6 +140,11 @@
             img.style.width = '150px';
             img.style.height = '150px';
             img.style.margin = '0 auto';
+            
+            img.onload = function() {
+                if (callback) callback();
+            };
+            
             container.appendChild(img);
         }
         
@@ -166,14 +168,16 @@
             `;
             ticketDiv.classList.remove('hidden');
             
-            // Генерируем QR-код через API
-            generateQRCode(ticketNumber, 'qrContainer');
-            
-            // Кнопка скачивания
-            setTimeout(() => {
+            // Генерируем QR-код и ПОСЛЕ загрузки активируем кнопку
+            generateQRCode(ticketNumber, 'qrContainer', () => {
+                // Теперь кнопка скачивания будет ждать QR-код
                 const downloadBtn = document.getElementById('downloadBtn');
                 if (downloadBtn) {
-                    downloadBtn.addEventListener('click', () => {
+                    // Убираем старые обработчики
+                    const newBtn = downloadBtn.cloneNode(true);
+                    downloadBtn.parentNode.replaceChild(newBtn, downloadBtn);
+                    
+                    newBtn.addEventListener('click', () => {
                         const element = document.getElementById('ticketToDownload');
                         html2canvas(element, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
                             const link = document.createElement('a');
@@ -185,10 +189,9 @@
                         });
                     });
                 }
-            }, 500);
+            });
         }
         
-        // ОСНОВНАЯ ЛОГИКА
         document.getElementById('generateBtn').addEventListener('click', () => {
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();

@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Получить билет | Музыкальный Квиз</title>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -80,6 +79,10 @@
             padding: 10px;
             border-radius: 10px;
         }
+        .qr-container img {
+            max-width: 160px;
+            height: auto;
+        }
         .ticket-code {
             text-align: center;
             font-family: monospace;
@@ -119,7 +122,6 @@
     </div>
 
     <script>
-        // ========== НАСТРОЙКА GOOGLE ТАБЛИЦЫ ==========
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwExUGSUCjdZCRFQSgHuFW8HtoRMiS64tWQsYpqxC6NTbdkNuK9u3QSIVGUM89qa_kf/exec';
         
         function hasTicket(firstName, lastName) {
@@ -159,16 +161,18 @@
             }
         }
         
-        function generateQRCode(containerId, text) {
+        // Функция создания QR-кода через API (без дополнительных библиотек)
+        function addQRCode(containerId, text) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
-            new QRCode(container, {
-                text: text,
-                width: 160,
-                height: 160,
-                colorDark: "#000000",
-                colorLight: "#ffffff"
-            });
+            const img = document.createElement('img');
+            img.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(text)}`;
+            img.style.width = '150px';
+            img.style.height = '150px';
+            img.onload = () => {
+                // QR загрузился
+            };
+            container.appendChild(img);
         }
         
         function showTicket(firstName, lastName, ticketNumber) {
@@ -191,8 +195,8 @@
             `;
             ticketDiv.classList.remove('hidden');
             
-            // Генерация QR-кода
-            generateQRCode('qrContainer', ticketNumber);
+            // Генерация QR-кода через API
+            addQRCode('qrContainer', ticketNumber);
             
             // Кнопка скачивания
             const downloadBtn = document.getElementById('downloadBtn');

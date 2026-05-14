@@ -71,14 +71,18 @@
         .ticket-header p { color: #333; margin: 5px 0 0; }
         .ticket-info { margin-bottom: 10px; color: #333; }
         .ticket-info span { color: #cc0000; font-weight: bold; }
-        .qr-code {
-            background: white;
+        .ticket-code {
+            background: #f0f0f0;
             padding: 15px;
             margin: 15px auto;
             text-align: center;
-            max-width: 200px;
+            font-family: monospace;
+            font-size: 1.3rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            border: 1px dashed #cc0000;
+            word-break: break-all;
         }
-        .qr-code img { max-width: 100%; }
         .hidden { display: none; }
         .footer { text-align: center; font-size: 0.7rem; color: #666; margin-top: 20px; }
         .event-info { text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #333; }
@@ -128,35 +132,7 @@
             return `${f1}${l1}-${random}`;
         }
         
-        // Функция для создания QR-кода с возвратом Promise
-        function generateQRCode(text, elementId) {
-            return new Promise((resolve) => {
-                const container = document.getElementById(elementId);
-                container.innerHTML = '';
-                
-                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(text)}`;
-                
-                const img = document.createElement('img');
-                img.src = qrUrl;
-                img.style.width = '150px';
-                img.style.height = '150px';
-                img.style.margin = '0 auto';
-                
-                img.onload = function() {
-                    resolve();
-                };
-                
-                img.onerror = function() {
-                    // Если QR не загрузился, показываем текст
-                    container.innerHTML = `<div style="padding:20px; background:#eee;">${text}</div>`;
-                    resolve();
-                };
-                
-                container.appendChild(img);
-            });
-        }
-        
-        async function showTicket(firstName, lastName, ticketNumber) {
+        function showTicket(firstName, lastName, ticketNumber) {
             const ticketDiv = document.getElementById('ticketDiv');
             
             ticketDiv.innerHTML = `
@@ -169,17 +145,14 @@
                     <div class="ticket-info"><span>МЕСТО:</span> Липецк, ул. Ленина, 31а</div>
                     <div class="ticket-info"><span>УЧАСТНИК:</span> ${firstName} ${lastName}</div>
                     <div class="ticket-info"><span>БИЛЕТ №:</span> ${ticketNumber}</div>
-                    <div id="qrContainer" class="qr-code"></div>
-                    <div style="text-align: center; font-size: 0.7rem; margin-top: 10px;">🎵 Предъявите билет на входе (QR-код для проверки)</div>
+                    <div class="ticket-code">🎫 ${ticketNumber}</div>
+                    <div style="text-align: center; font-size: 0.7rem; margin-top: 10px;">🎵 Предъявите билет на входе (назовите номер билета)</div>
                 </div>
                 <button id="downloadBtn">💾 СКАЧАТЬ БИЛЕТ</button>
             `;
             ticketDiv.classList.remove('hidden');
             
-            // Ждём загрузки QR-кода
-            await generateQRCode(ticketNumber, 'qrContainer');
-            
-            // Теперь кнопка скачивания
+            // Кнопка скачивания
             const downloadBtn = document.getElementById('downloadBtn');
             if (downloadBtn) {
                 downloadBtn.addEventListener('click', async () => {

@@ -96,6 +96,11 @@
             color: #aaa;
             margin-top: 20px;
         }
+        .qr-container {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+        }
     </style>
 </head>
 <body>
@@ -121,6 +126,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script>
+        // Google Script URL (ваш)
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby_8GqoxJS_OmCGJO-wI4mrJIqVW4SlTS56LDypLtE-Qg13ZOV06LSatLBpkAj_InXTyg/exec';
         
         function isTicketIssued(firstName, lastName) {
@@ -158,9 +164,9 @@
                         date: new Date().toLocaleString('ru-RU')
                     })
                 });
-                console.log('Данные сохранены в Google Таблицу');
+                console.log('Сохранено в Google');
             } catch(e) {
-                console.log('Ошибка сохранения:', e);
+                console.log('Ошибка сохранения');
             }
         }
         
@@ -180,7 +186,7 @@
                         </div>
                         <div><span style="color: #cc0000;">БИЛЕТ №</span> ${ticketId}</div>
                     </div>
-                    <div id="qr_${ticketId}" style="display: flex; justify-content: center; margin: 15px 0;"></div>
+                    <div id="qr_${ticketId}" class="qr-container"></div>
                     <div style="text-align: center; font-size: 0.7rem; color: #aaa; margin-top: 15px;">
                         🎵 Предъявите билет на входе
                     </div>
@@ -189,15 +195,21 @@
             `;
             container.style.display = 'block';
             
-            new QRCode(document.getElementById(`qr_${ticketId}`), {
-                text: ticketId,
-                width: 160,
-                height: 160,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
+            // Генерация QR-кода
+            try {
+                new QRCode(document.getElementById(`qr_${ticketId}`), {
+                    text: ticketId,
+                    width: 160,
+                    height: 160,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            } catch(e) {
+                console.log('QR error', e);
+            }
             
+            // Кнопка скачивания
             document.getElementById('downloadTicketBtn').addEventListener('click', () => {
                 const ticketElement = document.getElementById('ticketToDownload');
                 html2canvas(ticketElement, {

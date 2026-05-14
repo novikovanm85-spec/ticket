@@ -59,24 +59,27 @@
             color: #ff8888;
         }
         .ticket {
-            background: #0a0a0a;
+            background: white;
             padding: 20px;
             border-radius: 15px;
             margin-top: 20px;
-            border: 1px solid #cc0000;
+            border: 2px solid #cc0000;
+            color: black;
         }
         .ticket-header { text-align: center; border-bottom: 2px solid #cc0000; padding-bottom: 10px; margin-bottom: 15px; }
-        .ticket-header h2 { color: #cc0000; font-size: 1.5rem; }
-        .ticket-info { margin-bottom: 10px; }
+        .ticket-header h2 { color: #cc0000; font-size: 1.5rem; margin: 0; }
+        .ticket-header p { color: #333; margin: 5px 0 0; }
+        .ticket-info { margin-bottom: 10px; color: #333; }
         .ticket-info span { color: #cc0000; font-weight: bold; }
-        .qr-container {
-            display: flex;
-            justify-content: center;
-            margin: 15px 0;
+        .qr-code {
             background: white;
-            padding: 10px;
-            border-radius: 10px;
+            padding: 15px;
+            margin: 15px auto;
+            text-align: center;
+            border: 1px dashed #cc0000;
+            max-width: 200px;
         }
+        .qr-code img { max-width: 100%; }
         .hidden { display: none; }
         .footer { text-align: center; font-size: 0.7rem; color: #666; margin-top: 20px; }
         .event-info { text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #333; }
@@ -127,10 +130,25 @@
             return `${f1}${l1}-${random}`;
         }
         
+        // Функция для создания простого QR-кода (через API)
+        async function generateQRCode(text, elementId) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = '';
+            
+            // Используем бесплатное API для генерации QR-кода
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(text)}`;
+            
+            const img = document.createElement('img');
+            img.src = qrUrl;
+            img.style.width = '150px';
+            img.style.height = '150px';
+            img.style.margin = '0 auto';
+            container.appendChild(img);
+        }
+        
         function showTicket(firstName, lastName, ticketNumber) {
             const ticketDiv = document.getElementById('ticketDiv');
             
-            // Создаём билет
             ticketDiv.innerHTML = `
                 <div class="ticket" id="ticketToDownload">
                     <div class="ticket-header">
@@ -141,69 +159,33 @@
                     <div class="ticket-info"><span>МЕСТО:</span> Липецк, ул. Ленина, 31а</div>
                     <div class="ticket-info"><span>УЧАСТНИК:</span> ${firstName} ${lastName}</div>
                     <div class="ticket-info"><span>БИЛЕТ №:</span> ${ticketNumber}</div>
-                    <div id="qrcode" class="qr-container"></div>
-                    <div style="text-align: center; font-size: 0.7rem;">🎵 Предъявите билет на входе</div>
+                    <div id="qrContainer" class="qr-code"></div>
+                    <div style="text-align: center; font-size: 0.7rem; margin-top: 10px;">🎵 Предъявите билет на входе (QR-код для проверки)</div>
                 </div>
                 <button id="downloadBtn">💾 СКАЧАТЬ БИЛЕТ</button>
             `;
             ticketDiv.classList.remove('hidden');
             
-            // Генерация QR-кода (используем простой canvas подход)
-            const qrContainer = document.getElementById('qrcode');
-            qrContainer.innerHTML = ''; // очищаем
-            
-            // Создаём canvas для QR-кода вручную
-            const canvas = document.createElement('canvas');
-            canvas.width = 160;
-            canvas.height = 160;
-            qrContainer.appendChild(canvas);
-            
-            // Простой QR-генератор (код совместимый)
-            // Используем встроенную функцию для создания QR
-            const QRCode = function(canvas, text) {
-                // Эмуляция QR-кода для простоты (пока просто чёрный квадрат с текстом)
-                // В реальности нужна библиотека, но для теста так
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = 'black';
-                ctx.font = '12px Arial';
-                ctx.fillText(text.substring(0, 20), 20, 80);
-            };
-            
-            // Попытка использовать внешнюю библиотеку QRCode
-            if (typeof QRCode !== 'undefined') {
-                new QRCode(qrContainer, {
-                    text: ticketNumber,
-                    width: 160,
-                    height: 160,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff"
-                });
-            } else {
-                // Если библиотека не загрузилась, показываем номер текстом
-                const div = document.createElement('div');
-                div.style.color = 'black';
-                div.style.backgroundColor = 'white';
-                div.style.padding = '20px';
-                div.style.fontSize = '14px';
-                div.style.textAlign = 'center';
-                div.innerHTML = ticketNumber;
-                qrContainer.appendChild(div);
-            }
+            // Генерируем QR-код через API
+            generateQRCode(ticketNumber, 'qrContainer');
             
             // Кнопка скачивания
-            document.getElementById('downloadBtn').addEventListener('click', () => {
-                const element = document.getElementById('ticketToDownload');
-                html2canvas(element, { scale: 2, backgroundColor: null }).then(canvas => {
-                    const link = document.createElement('a');
-                    link.download = `ticket_${firstName}_${lastName}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                }).catch(err => {
-                    alert('Ошибка при сохранении билета');
-                });
-            });
+            setTimeout(() => {
+                const downloadBtn = document.getElementById('downloadBtn');
+                if (downloadBtn) {
+                    downloadBtn.addEventListener('click', () => {
+                        const element = document.getElementById('ticketToDownload');
+                        html2canvas(element, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+                            const link = document.createElement('a');
+                            link.download = `ticket_${firstName}_${lastName}.png`;
+                            link.href = canvas.toDataURL('image/png');
+                            link.click();
+                        }).catch(err => {
+                            alert('Ошибка при сохранении билета');
+                        });
+                    });
+                }
+            }, 500);
         }
         
         // ОСНОВНАЯ ЛОГИКА

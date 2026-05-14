@@ -49,11 +49,7 @@
             cursor: pointer;
             margin-top: 10px;
         }
-        button:hover { background: #ff0000; }
-        button:disabled {
-            background: #555;
-            cursor: not-allowed;
-        }
+        button:disabled { background: #555; cursor: not-allowed; }
         .error {
             background: rgba(204,0,0,0.2);
             padding: 10px;
@@ -80,7 +76,6 @@
             font-family: monospace;
             font-size: 1.6rem;
             font-weight: bold;
-            letter-spacing: 2px;
             margin: 20px 0;
             padding: 15px;
             background: #f0f0f0;
@@ -120,25 +115,13 @@
     <script>
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwExUGSUCjdZCRFQSgHuFW8HtoRMiS64tWQsYpqxC6NTbdkNuK9u3QSIVGUM89qa_kf/exec';
         
-        // Блокируем кнопку после первого нажатия (пока не завершится операция)
         let isProcessing = false;
         
-        // Проверка, не получал ли уже билет (по имени+фамилии)
-        async function hasTicket(firstName, lastName) {
-            // Сначала проверяем локально (быстро)
+        // Защита от дублей через localStorage
+        function hasTicket(firstName, lastName) {
             const key = firstName.toLowerCase().trim() + '_' + lastName.toLowerCase().trim();
             const saved = localStorage.getItem('ticket_issued');
-            if (saved === key) return true;
-            
-            // Дополнительная проверка через Google Таблицу (защита от очистки localStorage)
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL + '?action=check&firstName=' + encodeURIComponent(firstName) + '&lastName=' + encodeURIComponent(lastName));
-                const data = await response.json();
-                return data.exists === true;
-            } catch(e) {
-                console.log('Ошибка проверки в таблице', e);
-                return false;
-            }
+            return saved === key;
         }
         
         function markIssued(firstName, lastName) {
@@ -166,10 +149,8 @@
                         date: new Date().toLocaleString('ru-RU')
                     })
                 });
-                console.log('Данные отправлены');
                 return true;
             } catch(e) {
-                console.log('Ошибка отправки:', e);
                 return false;
             }
         }
@@ -187,7 +168,7 @@
                     <div class="ticket-info"><span>УЧАСТНИК:</span> ${firstName} ${lastName}</div>
                     <div class="ticket-info"><span>БИЛЕТ №:</span> ${ticketNumber}</div>
                     <div class="big-number">${ticketNumber}</div>
-                    <div style="text-align: center; font-size: 0.7rem; margin-top: 10px;">🎵 Предъявите билет на входе</div>
+                    <div style="text-align: center; font-size: 0.7rem; margin-top: 10px;">🎵 Предъявите билет на входе (назовите номер)</div>
                 </div>
                 <button id="downloadBtn">💾 СКАЧАТЬ БИЛЕТ</button>
             `;
@@ -208,7 +189,6 @@
         }
         
         document.getElementById('generateBtn').addEventListener('click', async () => {
-            // Защита от повторного нажатия
             if (isProcessing) return;
             
             const firstName = document.getElementById('firstName').value.trim();
@@ -223,14 +203,12 @@
                 return;
             }
             
-            // Блокируем кнопку
+            // Блокируем кнопку и показываем статус
             isProcessing = true;
             generateBtn.disabled = true;
             generateBtn.textContent = 'ПРОВЕРКА...';
             
-            // Проверяем, не получал ли уже билет
-            const alreadyIssued = await hasTicket(firstName, lastName);
-            if (alreadyIssued) {
+            if (hasTicket(firstName, lastName)) {
                 errorDiv.innerHTML = '❌ Вы уже получили билет. Билет выдаётся один раз.';
                 errorDiv.classList.remove('hidden');
                 generateBtn.disabled = false;

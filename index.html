@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Получить билет | Музыкальный Квиз</title>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -78,14 +79,22 @@
         .big-number {
             text-align: center;
             font-family: monospace;
-            font-size: 1.6rem;
+            font-size: 1.2rem;
             font-weight: bold;
             letter-spacing: 2px;
-            margin: 20px 0;
-            padding: 15px;
+            margin: 10px 0;
+            padding: 10px;
             background: #f0f0f0;
             border-radius: 10px;
             word-break: break-all;
+        }
+        .barcode-container {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
         }
         .hidden { display: none; }
         .footer { text-align: center; font-size: 0.7rem; color: #666; margin-top: 20px; }
@@ -120,17 +129,13 @@
     <script>
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwExUGSUCjdZCRFQSgHuFW8HtoRMiS64tWQsYpqxC6NTbdkNuK9u3QSIVGUM89qa_kf/exec';
         
-        // Блокируем кнопку после первого нажатия (пока не завершится операция)
         let isProcessing = false;
         
-        // Проверка, не получал ли уже билет (по имени+фамилии)
         async function hasTicket(firstName, lastName) {
-            // Сначала проверяем локально (быстро)
             const key = firstName.toLowerCase().trim() + '_' + lastName.toLowerCase().trim();
             const saved = localStorage.getItem('ticket_issued');
             if (saved === key) return true;
             
-            // Дополнительная проверка через Google Таблицу (защита от очистки localStorage)
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL + '?action=check&firstName=' + encodeURIComponent(firstName) + '&lastName=' + encodeURIComponent(lastName));
                 const data = await response.json();
@@ -174,6 +179,27 @@
             }
         }
         
+        function generateBarcode(containerId, code) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('id', 'barcode-svg');
+            container.appendChild(svg);
+            
+            try {
+                JsBarcode('#barcode-svg', code, {
+                    format: 'CODE128',
+                    width: 2,
+                    height: 50,
+                    displayValue: false,
+                    margin: 0
+                });
+            } catch(e) {
+                console.log('Barcode error', e);
+                container.innerHTML = `<div style="padding:10px; background:#f0f0f0;">${code}</div>`;
+            }
+        }
+        
         function showTicket(firstName, lastName, ticketNumber) {
             const ticketDiv = document.getElementById('ticketDiv');
             ticketDiv.innerHTML = `
@@ -186,12 +212,18 @@
                     <div class="ticket-info"><span>МЕСТО:</span> Липецк, ул. Ленина, 31а</div>
                     <div class="ticket-info"><span>УЧАСТНИК:</span> ${firstName} ${lastName}</div>
                     <div class="ticket-info"><span>БИЛЕТ №:</span> ${ticketNumber}</div>
+                    <div id="barcodeContainer" class="barcode-container"></div>
                     <div class="big-number">${ticketNumber}</div>
-                    <div style="text-align: center; font-size: 0.7rem; margin-top: 10px;">🎵 Предъявите билет на входе</div>
+                    <div style="text-align: center; font-size: 0.7rem; margin-top: 10px;">🎵 Отсканируйте штрих-код на входе</div>
                 </div>
                 <button id="downloadBtn">💾 СКАЧАТЬ БИЛЕТ</button>
             `;
             ticketDiv.classList.remove('hidden');
+            
+            // Генерируем штрих-код
+            setTimeout(() => {
+                generateBarcode('barcodeContainer', ticketNumber);
+            }, 100);
             
             document.getElementById('downloadBtn').addEventListener('click', async () => {
                 const element = document.getElementById('ticketToDownload');
@@ -208,7 +240,6 @@
         }
         
         document.getElementById('generateBtn').addEventListener('click', async () => {
-            // Защита от повторного нажатия
             if (isProcessing) return;
             
             const firstName = document.getElementById('firstName').value.trim();
@@ -223,12 +254,10 @@
                 return;
             }
             
-            // Блокируем кнопку
             isProcessing = true;
             generateBtn.disabled = true;
             generateBtn.textContent = 'ПРОВЕРКА...';
             
-            // Проверяем, не получал ли уже билет
             const alreadyIssued = await hasTicket(firstName, lastName);
             if (alreadyIssued) {
                 errorDiv.innerHTML = '❌ Вы уже получили билет. Билет выдаётся один раз.';

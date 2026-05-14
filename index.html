@@ -114,6 +114,9 @@
     </div>
 
     <script>
+        // ========== НАСТРОЙКА GOOGLE ТАБЛИЦЫ ==========
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwExUGSUCjdZCRFQSgHuFW8HtoRMiS64tWQsYpqxC6NTbdkNuK9u3QSIVGUM89qa_kf/exec';
+        
         function hasTicket(firstName, lastName) {
             const key = firstName.toLowerCase().trim() + '_' + lastName.toLowerCase().trim();
             const saved = localStorage.getItem('ticket_issued');
@@ -132,9 +135,27 @@
             return `${f1}${l1}-${random}`;
         }
         
+        async function sendToGoogleSheet(firstName, lastName, ticketNumber) {
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        firstName: firstName,
+                        lastName: lastName,
+                        ticketNumber: ticketNumber,
+                        date: new Date().toLocaleString('ru-RU')
+                    })
+                });
+                console.log('Данные отправлены в Google Таблицу');
+            } catch(e) {
+                console.log('Ошибка отправки:', e);
+            }
+        }
+        
         function showTicket(firstName, lastName, ticketNumber) {
             const ticketDiv = document.getElementById('ticketDiv');
-            
             ticketDiv.innerHTML = `
                 <div class="ticket" id="ticketToDownload">
                     <div class="ticket-header">
@@ -152,7 +173,6 @@
             `;
             ticketDiv.classList.remove('hidden');
             
-            // Кнопка скачивания
             const downloadBtn = document.getElementById('downloadBtn');
             if (downloadBtn) {
                 downloadBtn.addEventListener('click', async () => {
@@ -170,7 +190,7 @@
             }
         }
         
-        document.getElementById('generateBtn').addEventListener('click', () => {
+        document.getElementById('generateBtn').addEventListener('click', async () => {
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
             const errorDiv = document.getElementById('errorDiv');
@@ -189,6 +209,8 @@
             }
             
             const ticketNumber = generateTicketNumber(firstName, lastName);
+            
+            await sendToGoogleSheet(firstName, lastName, ticketNumber);
             markIssued(firstName, lastName);
             
             formDiv.classList.add('hidden');

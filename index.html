@@ -128,27 +128,35 @@
             return `${f1}${l1}-${random}`;
         }
         
-        // Функция для создания QR-кода с колбэком
-        function generateQRCode(text, elementId, callback) {
-            const container = document.getElementById(elementId);
-            container.innerHTML = '';
-            
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(text)}`;
-            
-            const img = document.createElement('img');
-            img.src = qrUrl;
-            img.style.width = '150px';
-            img.style.height = '150px';
-            img.style.margin = '0 auto';
-            
-            img.onload = function() {
-                if (callback) callback();
-            };
-            
-            container.appendChild(img);
+        // Функция для создания QR-кода с возвратом Promise
+        function generateQRCode(text, elementId) {
+            return new Promise((resolve) => {
+                const container = document.getElementById(elementId);
+                container.innerHTML = '';
+                
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(text)}`;
+                
+                const img = document.createElement('img');
+                img.src = qrUrl;
+                img.style.width = '150px';
+                img.style.height = '150px';
+                img.style.margin = '0 auto';
+                
+                img.onload = function() {
+                    resolve();
+                };
+                
+                img.onerror = function() {
+                    // Если QR не загрузился, показываем текст
+                    container.innerHTML = `<div style="padding:20px; background:#eee;">${text}</div>`;
+                    resolve();
+                };
+                
+                container.appendChild(img);
+            });
         }
         
-        function showTicket(firstName, lastName, ticketNumber) {
+        async function showTicket(firstName, lastName, ticketNumber) {
             const ticketDiv = document.getElementById('ticketDiv');
             
             ticketDiv.innerHTML = `
@@ -168,28 +176,25 @@
             `;
             ticketDiv.classList.remove('hidden');
             
-            // Генерируем QR-код и ПОСЛЕ загрузки активируем кнопку
-            generateQRCode(ticketNumber, 'qrContainer', () => {
-                // Теперь кнопка скачивания будет ждать QR-код
-                const downloadBtn = document.getElementById('downloadBtn');
-                if (downloadBtn) {
-                    // Убираем старые обработчики
-                    const newBtn = downloadBtn.cloneNode(true);
-                    downloadBtn.parentNode.replaceChild(newBtn, downloadBtn);
-                    
-                    newBtn.addEventListener('click', () => {
-                        const element = document.getElementById('ticketToDownload');
-                        html2canvas(element, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
-                            const link = document.createElement('a');
-                            link.download = `ticket_${firstName}_${lastName}.png`;
-                            link.href = canvas.toDataURL('image/png');
-                            link.click();
-                        }).catch(err => {
-                            alert('Ошибка при сохранении билета');
-                        });
-                    });
-                }
-            });
+            // Ждём загрузки QR-кода
+            await generateQRCode(ticketNumber, 'qrContainer');
+            
+            // Теперь кнопка скачивания
+            const downloadBtn = document.getElementById('downloadBtn');
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', async () => {
+                    const element = document.getElementById('ticketToDownload');
+                    try {
+                        const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
+                        const link = document.createElement('a');
+                        link.download = `ticket_${firstName}_${lastName}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    } catch(err) {
+                        alert('Ошибка при сохранении билета');
+                    }
+                });
+            }
         }
         
         document.getElementById('generateBtn').addEventListener('click', () => {

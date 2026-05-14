@@ -71,24 +71,17 @@
         .ticket-header p { color: #333; margin: 5px 0 0; }
         .ticket-info { margin-bottom: 10px; color: #333; }
         .ticket-info span { color: #cc0000; font-weight: bold; }
-        .qr-container {
-            display: flex;
-            justify-content: center;
-            margin: 15px 0;
-            background: white;
-            padding: 10px;
-            border-radius: 10px;
-        }
-        .qr-container img {
-            max-width: 150px;
-            height: auto;
-        }
-        .small-number {
+        .ticket-code {
+            background: #f0f0f0;
+            padding: 15px;
+            margin: 15px auto;
             text-align: center;
             font-family: monospace;
-            font-size: 0.8rem;
-            margin-top: 10px;
-            color: #555;
+            font-size: 1.3rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            border: 1px dashed #cc0000;
+            word-break: break-all;
         }
         .hidden { display: none; }
         .footer { text-align: center; font-size: 0.7rem; color: #666; margin-top: 20px; }
@@ -121,6 +114,7 @@
     </div>
 
     <script>
+        // ========== НАСТРОЙКА GOOGLE ТАБЛИЦЫ ==========
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwExUGSUCjdZCRFQSgHuFW8HtoRMiS64tWQsYpqxC6NTbdkNuK9u3QSIVGUM89qa_kf/exec';
         
         function hasTicket(firstName, lastName) {
@@ -154,7 +148,7 @@
                         date: new Date().toLocaleString('ru-RU')
                     })
                 });
-                console.log('Данные отправлены');
+                console.log('Данные отправлены в Google Таблицу');
             } catch(e) {
                 console.log('Ошибка отправки:', e);
             }
@@ -162,8 +156,6 @@
         
         function showTicket(firstName, lastName, ticketNumber) {
             const ticketDiv = document.getElementById('ticketDiv');
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(ticketNumber)}`;
-            
             ticketDiv.innerHTML = `
                 <div class="ticket" id="ticketToDownload">
                     <div class="ticket-header">
@@ -174,28 +166,28 @@
                     <div class="ticket-info"><span>МЕСТО:</span> Липецк, ул. Ленина, 31а</div>
                     <div class="ticket-info"><span>УЧАСТНИК:</span> ${firstName} ${lastName}</div>
                     <div class="ticket-info"><span>БИЛЕТ №:</span> ${ticketNumber}</div>
-                    <div class="qr-container">
-                        <img src="${qrUrl}" alt="QR-код">
-                    </div>
-                    <div class="small-number">🎫 ${ticketNumber}</div>
-                    <div style="text-align: center; font-size: 0.7rem; margin-top: 10px;">🎵 Сканируйте QR-код на входе</div>
+                    <div class="ticket-code">🎫 ${ticketNumber}</div>
+                    <div style="text-align: center; font-size: 0.7rem; margin-top: 10px;">🎵 Предъявите билет на входе (назовите номер билета)</div>
                 </div>
                 <button id="downloadBtn">💾 СКАЧАТЬ БИЛЕТ</button>
             `;
             ticketDiv.classList.remove('hidden');
             
-            document.getElementById('downloadBtn').addEventListener('click', async () => {
-                const element = document.getElementById('ticketToDownload');
-                try {
-                    const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
-                    const link = document.createElement('a');
-                    link.download = `ticket_${firstName}_${lastName}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                } catch(err) {
-                    alert('Ошибка при сохранении билета');
-                }
-            });
+            const downloadBtn = document.getElementById('downloadBtn');
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', async () => {
+                    const element = document.getElementById('ticketToDownload');
+                    try {
+                        const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
+                        const link = document.createElement('a');
+                        link.download = `ticket_${firstName}_${lastName}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    } catch(err) {
+                        alert('Ошибка при сохранении билета');
+                    }
+                });
+            }
         }
         
         document.getElementById('generateBtn').addEventListener('click', async () => {
@@ -227,4 +219,3 @@
         });
     </script>
 </body>
-</html>

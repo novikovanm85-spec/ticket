@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Получить билет | Музыкальный Квиз</title>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -79,6 +78,11 @@
             background: white;
             padding: 10px;
             border-radius: 10px;
+            min-height: 150px;
+        }
+        .qr-container img {
+            max-width: 150px;
+            height: auto;
         }
         .ticket-code {
             text-align: center;
@@ -158,25 +162,10 @@
             }
         }
         
-        function generateQRCode(containerId, text) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
-            try {
-                new QRCode(container, {
-                    text: text,
-                    width: 150,
-                    height: 150,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff"
-                });
-            } catch(e) {
-                console.log('QR error:', e);
-                container.innerHTML = `<div style="padding:20px; background:#eee;">${text}</div>`;
-            }
-        }
-        
         function showTicket(firstName, lastName, ticketNumber) {
             const ticketDiv = document.getElementById('ticketDiv');
+            const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(ticketNumber)}`;
+            
             ticketDiv.innerHTML = `
                 <div class="ticket" id="ticketToDownload">
                     <div class="ticket-header">
@@ -187,7 +176,9 @@
                     <div class="ticket-info"><span>МЕСТО:</span> Липецк, ул. Ленина, 31а</div>
                     <div class="ticket-info"><span>УЧАСТНИК:</span> ${firstName} ${lastName}</div>
                     <div class="ticket-info"><span>БИЛЕТ №:</span> ${ticketNumber}</div>
-                    <div id="qrContainer" class="qr-container"></div>
+                    <div class="qr-container">
+                        <img src="${qrCodeUrl}" alt="QR-код">
+                    </div>
                     <div class="ticket-code">🎫 ${ticketNumber}</div>
                     <div style="text-align: center; font-size: 0.7rem; margin-top: 10px;">🎵 Предъявите QR-код на входе для сканирования</div>
                 </div>
@@ -195,12 +186,6 @@
             `;
             ticketDiv.classList.remove('hidden');
             
-            // Генерация QR-кода (немного ждём, чтобы DOM обновился)
-            setTimeout(() => {
-                generateQRCode('qrContainer', ticketNumber);
-            }, 100);
-            
-            // Кнопка скачивания
             const downloadBtn = document.getElementById('downloadBtn');
             if (downloadBtn) {
                 downloadBtn.addEventListener('click', async () => {

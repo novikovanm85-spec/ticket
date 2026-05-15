@@ -25,7 +25,6 @@
             border: 1px solid #cc0000;
         }
         h1 { color: #cc0000; text-align: center; margin-bottom: 25px; font-size: 1.8rem; }
-        h2 { color: #cc0000; text-align: center; font-size: 1.3rem; margin-bottom: 10px; }
         label { color: #cc0000; display: block; margin-bottom: 5px; font-weight: bold; }
         input {
             width: 100%;
@@ -64,82 +63,63 @@
             border-radius: 15px;
             margin-top: 20px;
             border: 2px solid #cc0000;
-            color: black;
             position: relative;
         }
-        /* Логотип теперь в шапке, не абсолютный */
         .logo {
             display: block;
-            margin: 5px auto 10px auto;
+            margin: 10px auto;
             width: 80px;
             height: auto;
         }
         .ticket-content {
             background: transparent;
-            padding: 15px;
-            border-radius: 12px;
+            padding: 10px;
             color: #ffffff;
-            position: relative;
-            z-index: 1;
-            overflow-wrap: break-word;
         }
-        .ticket-header { text-align: center; }
-        .ticket-header h2 { color: #ff5555; margin-bottom: 5px; }
-        .ticket-header p { color: #dddddd; margin-top: 5px; }
-        .ticket-info { 
-            margin-bottom: 10px; 
+        .ticket-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .ticket-header h2 {
+            color: #ff5555;
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        .ticket-header p {
+            color: #dddddd;
+            margin: 5px 0;
+        }
+        .ticket-info {
+            margin-bottom: 12px;
             color: #ffffff;
             font-weight: bold;
+            display: flex;
+            flex-wrap: wrap;
         }
-        .ticket-info span { 
-            color: #ff8888; 
+        .ticket-info span {
+            color: #ff8888;
             font-weight: bold;
-            display: inline-block;
             min-width: 70px;
         }
         .big-number {
             text-align: center;
             font-family: monospace;
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-weight: bold;
             margin: 20px 0;
-            padding: 15px;
+            padding: 12px;
             background: rgba(0, 0, 0, 0.5);
             color: #ffcc66;
             border-radius: 10px;
             word-break: break-all;
-            overflow-wrap: break-word;
-            white-space: normal;
         }
         .hidden { display: none; }
         .footer { text-align: center; font-size: 0.7rem; color: #666; margin-top: 20px; }
-        .event-info { text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #333; }
-        .event-info p { margin: 5px 0; color: #ccc; }
-
-        @media (max-width: 480px) {
-            .big-number {
-                font-size: 1rem;
-                padding: 10px;
-            }
-            .ticket-info {
-                font-size: 0.85rem;
-            }
-            .logo {
-                width: 60px;
-            }
-        }
     </style>
 </head>
 <body>
     <div class="container" id="app">
         <h1>🎸 ПОЛУЧИТЬ БИЛЕТ</h1>
-        
-        <div class="event-info">
-            <h2>ROCK QUIZ</h2>
-            <p>Музыкальная битва</p>
-            <p>📅 28 мая 2026 / 18:00</p>
-            <p>📍 Липецк, ул. Ленина, 31а</p>
-        </div>
         
         <div id="formDiv">
             <label>ИМЯ</label>

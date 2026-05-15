@@ -67,12 +67,22 @@
             color: black;
             position: relative;
         }
+        .logo {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 50px;
+            height: auto;
+            z-index: 2;
+        }
         .ticket-content {
             background: rgba(255, 255, 255, 0.25);
             backdrop-filter: blur(2px);
             padding: 15px;
             border-radius: 12px;
             color: #000;
+            position: relative;
+            z-index: 1;
         }
         .ticket-header h2 { color: #cc0000; }
         .ticket-header p { color: #222; }
@@ -166,6 +176,7 @@
             const ticketDiv = document.getElementById('ticketDiv');
             ticketDiv.innerHTML = `
                 <div class="ticket" id="ticketToDownload">
+                    <img src="logo.jpg" alt="Логотип" class="logo" onerror="this.style.display='none'">
                     <div class="ticket-content">
                         <div class="ticket-header">
                             <h2>ROCK QUIZ</h2>

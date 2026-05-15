@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -59,12 +59,19 @@
             color: #ff8888;
         }
         .ticket {
-            background: white;
+            background: white url('gpt-image-2_exquisite_high_fashion_photography_of_Create_a_vertical_background_for_a_concert-0.jpg') center/cover no-repeat;
             padding: 20px;
             border-radius: 15px;
             margin-top: 20px;
             border: 2px solid #cc0000;
             color: black;
+            position: relative;
+        }
+        /* Полупрозрачная подложка для читаемости текста */
+        .ticket-content {
+            background: rgba(255,255,255,0.85);
+            padding: 15px;
+            border-radius: 12px;
         }
         .ticket-header { text-align: center; border-bottom: 2px solid #cc0000; padding-bottom: 10px; margin-bottom: 15px; }
         .ticket-header h2 { color: #cc0000; font-size: 1.5rem; margin: 0; }
@@ -78,7 +85,7 @@
             font-weight: bold;
             margin: 20px 0;
             padding: 15px;
-            background: #f0f0f0;
+            background: rgba(240,240,240,0.9);
             border-radius: 10px;
             word-break: break-all;
         }
@@ -117,7 +124,6 @@
         
         let isProcessing = false;
         
-        // Защита от дублей через localStorage
         function hasTicket(firstName, lastName) {
             const key = firstName.toLowerCase().trim() + '_' + lastName.toLowerCase().trim();
             const saved = localStorage.getItem('ticket_issued');
@@ -159,16 +165,18 @@
             const ticketDiv = document.getElementById('ticketDiv');
             ticketDiv.innerHTML = `
                 <div class="ticket" id="ticketToDownload">
-                    <div class="ticket-header">
-                        <h2>ROCK QUIZ</h2>
-                        <p>Музыкальная битва</p>
+                    <div class="ticket-content">
+                        <div class="ticket-header">
+                            <h2>ROCK QUIZ</h2>
+                            <p>Музыкальная битва</p>
+                        </div>
+                        <div class="ticket-info"><span>ДАТА:</span> 28 мая 2026 / 18:00</div>
+                        <div class="ticket-info"><span>МЕСТО:</span> Липецк, ул. Ленина, 31а</div>
+                        <div class="ticket-info"><span>УЧАСТНИК:</span> ${firstName} ${lastName}</div>
+                        <div class="ticket-info"><span>БИЛЕТ №:</span> ${ticketNumber}</div>
+                        <div class="big-number">${ticketNumber}</div>
+                        <div style="text-align: center; font-size: 0.7rem; margin-top: 10px;">🎵 Предъявите билет на входе (назовите номер)</div>
                     </div>
-                    <div class="ticket-info"><span>ДАТА:</span> 28 мая 2026 / 18:00</div>
-                    <div class="ticket-info"><span>МЕСТО:</span> Липецк, ул. Ленина, 31а</div>
-                    <div class="ticket-info"><span>УЧАСТНИК:</span> ${firstName} ${lastName}</div>
-                    <div class="ticket-info"><span>БИЛЕТ №:</span> ${ticketNumber}</div>
-                    <div class="big-number">${ticketNumber}</div>
-                    <div style="text-align: center; font-size: 0.7rem; margin-top: 10px;">🎵 Предъявите билет на входе (назовите номер)</div>
                 </div>
                 <button id="downloadBtn">💾 СКАЧАТЬ БИЛЕТ</button>
             `;
@@ -203,7 +211,6 @@
                 return;
             }
             
-            // Блокируем кнопку и показываем статус
             isProcessing = true;
             generateBtn.disabled = true;
             generateBtn.textContent = 'ПРОВЕРКА...';
